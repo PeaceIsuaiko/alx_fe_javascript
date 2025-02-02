@@ -83,6 +83,27 @@ function restoreLastFilter() {
   }
 }
 
+// Function to Show a Random Quote
+function showRandomQuote() {
+  if (quotes.length === 0) {
+      alert("No quotes available. Add some first!");
+      return;
+  }
+
+  const randomIndex = Math.floor(Math.random() * quotes.length);
+  const randomQuote = quotes[randomIndex];
+
+  document.getElementById("quoteDisplay").innerHTML = `
+      <div class="quote">
+          <p>"${randomQuote.text}"</p>
+          <p>- ${randomQuote.category}</p>
+      </div>
+  `;
+}
+
+// Event Listener for "Show New Quote" Button
+document.getElementById("newQuote").addEventListener("click", showRandomQuote);
+
 // Function to Import Quotes from JSON File
 function importFromJsonFile(event) {
   const fileReader = new FileReader();
