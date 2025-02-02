@@ -1,60 +1,28 @@
-// Function to Post a New Quote to the Server
-async function postQuoteToServer(quoteText, category) {
+// Fetch Quotes from Server and Update Local Storage
+async function fetchQuotesFromServer() {
   try {
-      const response = await fetch("https://jsonplaceholder.typicode.com/posts", {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-              title: quoteText,
-              body: category
-          })
-      });
+      const response = await fetch("https://jsonplaceholder.typicode.com/posts");
 
       if (!response.ok) {
-          throw new Error("Failed to post quote to server");
+          throw new Error("Failed to fetch quotes from the server");
       }
 
-      const newQuote = await response.json();
-      console.log("Quote successfully posted:", newQuote);
-      return newQuote;
-  } catch (error) {
-      console.error("Error posting quote:", error);
-      return null;
-  }
-}
+      const data = await response.json();
 
-// Modify addQuote function to sync with the server
-async function addQuote() {
-  let quoteText = document.getElementById("newQuoteText").value.trim();
-  let category = document.getElementById("newQuoteCategory").value.trim() || "Uncategorized";
+      // Convert the fetched data into quote objects
+      const fetchedQuotes = data.slice(0, 10).map(item => ({
+          text: item.title,
+          category: "General"
+      }));
 
-  if (quoteText === "") {
-      alert("Please enter a quote.");
-      return;
-  }
+      // Retrieve existing quotes from local storage
+      let storedQuotes = JSON.parse(localStorage.getItem("quotes")) || [];
 
-  const newQuote = {
-      text: quoteText,
-      category: category
-  };
+      // Merge new quotes with existing ones
+      storedQuotes = [...storedQuotes, ...fetchedQuotes];
 
-  // Save to local storage
-  let quotes = JSON.parse(localStorage.getItem("quotes")) || [];
-  quotes.push(newQuote);
-  localStorage.setItem("quotes", JSON.stringify(quotes));
+      // Save updated quotes list to local storage
+      localStorage.setItem("quotes", JSON.stringify(storedQuotes));
 
-  // Post to the server
-  await postQuoteToServer(quoteText, category);
-
-  // Clear input fields
-  document.getElementById("newQuoteText").value = "";
-  document.getElementById("newQuoteCategory").value = "";
-
-  // Refresh displayed quotes
-  displayQuotes();
-}
-
-// Event Listener for Add Quote Button
-document.querySelector("button[onclick='addQuote()']").addEventListener("click", addQuote);
+      console.log("Quotes fetched from server and saved:", storedQuotes);
+      displayQuotes(); // Refre
