@@ -1,79 +1,116 @@
-// Array to store quotes
-let quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+document.addEventListener("DOMContentLoaded", () => {
+  loadQuotes();
+  populateCategories();
+  restoreLastFilter();
+});
 
-// Function to add a new quote
+const quotes = JSON.parse(localStorage.getItem("quotes")) || [];
+
+// Function to Add a New Quote
 function addQuote() {
-    const quoteText = document.getElementById("newQuoteText").value.trim();
-    const quoteCategory = document.getElementById("newQuoteCategory").value.trim();
+  const quoteText = document.getElementById("newQuoteText").value.trim();
+  const quoteCategory = document.getElementById("newQuoteCategory").value.trim();
 
-    if (!quoteText || !quoteCategory) {
-        alert("Please enter both quote and category!");
-        return;
-    }
+  if (!quoteText || !quoteCategory) {
+      alert("Please enter both quote text and category.");
+      return;
+  }
 
-    // Create a quote object
-    const newQuote = { text: quoteText, category: quoteCategory };
+  const newQuote = { text: quoteText, category: quoteCategory };
+  quotes.push(newQuote);
+  localStorage.setItem("quotes", JSON.stringify(quotes));
 
-    // Add quote to the array
-    quotes.push(newQuote);
+  document.getElementById("newQuoteText").value = "";
+  document.getElementById("newQuoteCategory").value = "";
 
-    // Save to local storage
-    localStorage.setItem("quotes", JSON.stringify(quotes));
-
-    // Clear input fields
-    document.getElementById("newQuoteText").value = "";
-    document.getElementById("newQuoteCategory").value = "";
-
-    // Refresh displayed quotes
-    displayQuotes();
+  populateCategories();
+  displayQuotes();
 }
 
-// Function to display stored quotes
+// Function to Display Quotes Based on Selected Category
 function displayQuotes() {
-    const quoteDisplay = document.getElementById("quoteDisplay");
-    quoteDisplay.innerHTML = "";
+  const quoteDisplay = document.getElementById("quoteDisplay");
+  quoteDisplay.innerHTML = "";
 
-    quotes.forEach((quote, index) => {
-        const quoteDiv = document.createElement("div");
-        quoteDiv.innerHTML = `<p>"${quote.text}" - <strong>${quote.category}</strong></p>
-                              <button onclick="removeQuote(${index})">Remove</button>`;
-        quoteDisplay.appendChild(quoteDiv);
-    });
+  const selectedCategory = document.getElementById("categoryFilter").value;
+  const filteredQuotes = selectedCategory === "all" 
+      ? quotes 
+      : quotes.filter(quote => quote.category === selectedCategory);
+
+  filteredQuotes.forEach((quote, index) => {
+      const quoteDiv = document.createElement("div");
+      quoteDiv.classList.add("quote");
+      quoteDiv.innerHTML = `<p>"${quote.text}"</p><p>- ${quote.category}</p> 
+                            <button onclick="removeQuote(${index})">Remove</button>`;
+      quoteDisplay.appendChild(quoteDiv);
+  });
 }
 
-// Function to remove a quote
+// Function to Remove a Quote
 function removeQuote(index) {
-    quotes.splice(index, 1);
-    localStorage.setItem("quotes", JSON.stringify(quotes));
-    displayQuotes();
+  quotes.splice(index, 1);
+  localStorage.setItem("quotes", JSON.stringify(quotes));
+  displayQuotes();
 }
 
-// Function to export quotes as JSON
-function exportQuotes() {
-    const dataStr = JSON.stringify(quotes, null, 2);
-    const blob = new Blob([dataStr], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
+// Function to Populate Categories Dynamically
+function populateCategories() {
+  const categoryFilter = document.getElementById("categoryFilter");
+  categoryFilter.innerHTML = `<option value="all">All Categories</option>`;
 
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "quotes.json";
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+  const categories = [...new Set(quotes.map(quote => quote.category))];
+
+  categories.forEach(category => {
+      const option = document.createElement("option");
+      option.value = category;
+      option.textContent = category;
+      categoryFilter.appendChild(option);
+  });
 }
 
-// Function to import quotes from JSON file
+// Function to Filter Quotes Based on Selected Category
+function filterQuotes() {
+  const selectedCategory = document.getElementById("categoryFilter").value;
+  localStorage.setItem("selectedCategory", selectedCategory);
+  displayQuotes();
+}
+
+// Restore Last Selected Filter from Local Storage
+function restoreLastFilter() {
+  const lastFilter = localStorage.getItem("selectedCategory");
+  if (lastFilter) {
+      document.getElementById("categoryFilter").value = lastFilter;
+  }
+}
+
+// Function to Import Quotes from JSON File
 function importFromJsonFile(event) {
-    const fileReader = new FileReader();
-    fileReader.onload = function(event) {
-        const importedQuotes = JSON.parse(event.target.result);
-        quotes.push(...importedQuotes);
-        localStorage.setItem("quotes", JSON.stringify(quotes));
-        displayQuotes();
-        alert("Quotes imported successfully!");
-    };
-    fileReader.readAsText(event.target.files[0]);
+  const fileReader = new FileReader();
+  fileReader.onload = function (event) {
+      const importedQuotes = JSON.parse(event.target.result);
+      quotes.push(...importedQuotes);
+      localStorage.setItem("quotes", JSON.stringify(quotes));
+      populateCategories();
+      displayQuotes();
+      alert("Quotes imported successfully!");
+  };
+  fileReader.readAsText(event.target.files[0]);
 }
 
-// Load existing quotes when the page loads
-document.addEventListener("DOMContentLoaded", displayQuotes);
+// Function to Export Quotes to JSON File
+function exportQuotes() {
+  const quotesJSON = JSON.stringify(quotes, null, 2);
+  const blob = new Blob([quotesJSON], { type: "application/json" });
+  const link = document.createElement("a");
+
+  link.href = URL.createObjectURL(blob);
+  link.download = "quotes.json";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+// Load Quotes on Page Load
+function loadQuotes() {
+  displayQuotes();
+}
